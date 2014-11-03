@@ -4,10 +4,14 @@
 #include <string.h>
 #include <time.h>
 #include <gtk/gtk.h>
+#include <time.h>
+#include "2048_AI.h"
+//#include "2048_AI.c"
 
 Grid *game_grid;
 
 GtkWidget *gui_tile[4][4];
+GtkWidget *window, *newgamebutton, *autoplaybutton, *hbox, *vbox;
 
 void grid_gui_set(Grid *);
 void gui_init(int , char **);
@@ -34,7 +38,6 @@ void gui_init(int argc, char **argv){
 
 	gtk_init(&argc,&argv);
 	int i,j;
-	GtkWidget *window, *newgamebutton, *autoplaybutton, *hbox, *vbox;
 //	image1 = gtk_image_new_from_file("/home/hemanth/Downloads/logo.jpg");
 //	image2 = gtk_image_new_from_file("/home/hemanth/Downloads/logo.jpg");
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -75,7 +78,6 @@ void gui_init(int argc, char **argv){
 		gtk_box_pack_start(GTK_BOX(vbox),hbox,0,1,5);
 	}
 	grid_gui_set(game_grid);
-
 	//gtk_table_attach(GTK_TABLE(table), image1, 0, 1, 0, 1, GTK_FILL, GTK_FILL, 0, 0);
 	//gtk_table_attach(GTK_TABLE(table), image2, 0, 1, 1, 2, GTK_FILL, GTK_FILL, 0, 0);
 	//gtk_table_attach(GTK_TABLE(table), image, 1, 2, 0, 1, GTK_FILL, GTK_FILL, 0, 0);
@@ -111,13 +113,7 @@ void newgame_clicked(GtkWidget *newgamebutton, gpointer data){
 	return;
 }
 
-void autoplay_clicked(GtkWidget *autoplaybutton, gpointer data){
-
-	return;
-}
-
 void grid_gui_set(Grid *game_grid){
-
 	int i,j;
 	for(i=0;i<4;i++){
 		for(j=0;j<4;j++){
@@ -170,33 +166,48 @@ void grid_gui_set(Grid *game_grid){
 				case 512:
 					gtk_image_set_from_file(GTK_IMAGE(gui_tile[i][j]),"./2048_tiles/tile_512.png");
 					//gtk_table_attach(GTK_TABLE(table),tile[9],i, i+1, j, j+1,GTK_FILL,GTK_FILL,0,0);
-					gui_tile[i][j] = gtk_image_new_from_file("./2048_tiles/tile_512.png");
+					//gui_tile[i][j] = gtk_image_new_from_file("./2048_tiles/tile_512.png");
 					break;
 				case 1024:
 					gtk_image_set_from_file(GTK_IMAGE(gui_tile[i][j]),"./2048_tiles/tile_1024.png");
 					//gtk_table_attach(GTK_TABLE(table),tile[10],i, i+1, j, j+1,GTK_FILL,GTK_FILL,0,0);
-					gui_tile[i][j] = gtk_image_new_from_file("./2048_tiles/tile_1024.png");
+					//gui_tile[i][j] = gtk_image_new_from_file("./2048_tiles/tile_1024.png");
 					break;
 				case 2048:
 					gtk_image_set_from_file(GTK_IMAGE(gui_tile[i][j]),"./2048_tiles/tile_2048.png");
 					//gtk_table_attach(GTK_TABLE(table),tile[11],i, i+1, j, j+1,GTK_FILL,GTK_FILL,0,0);
-					gui_tile[i][j] = gtk_image_new_from_file("./2048_tiles/tile_2048.png");
+					//gui_tile[i][j] = gtk_image_new_from_file("./2048_tiles/tile_2048.png");
 					break;
 				case 4096:
 					gtk_image_set_from_file(GTK_IMAGE(gui_tile[i][j]),"./2048_tiles/tile_4096.png");
 					//gtk_table_attach(GTK_TABLE(table),tile[12],i, i+1, j, j+1,GTK_FILL,GTK_FILL,0,0);
-					gui_tile[i][j] = gtk_image_new_from_file("./2048_tiles/tile_4096.png");
+					//gui_tile[i][j] = gtk_image_new_from_file("./2048_tiles/tile_4096.png");
 					break;
 				case 8192:
 					gtk_image_set_from_file(GTK_IMAGE(gui_tile[i][j]),"./2048_tiles/tile_8192.png");
 					//gtk_table_attach(GTK_TABLE(table),tile[13],i, i+1, j, j+1,GTK_FILL,GTK_FILL,0,0);
-					gui_tile[i][j] = gtk_image_new_from_file("./2048_tiles/tile_8192.png");
+					//gui_tile[i][j] = gtk_image_new_from_file("./2048_tiles/tile_8192.png");
 					break;																																										
 			}
 		}
 	}
 	return;
+}
 
+
+void autoplay_clicked(GtkWidget *autoplaybutton, gpointer data){
+	int i,j;
+	Bestmove *bestmove;
+	while(1){
+		bestmove = best_move(game_grid, 5, INT_MIN, INT_MAX, USER);
+		if(bestmove->direction){
+			move_tiles(game_grid, bestmove->direction, 1);
+			grid_print(game_grid);
+			grid_gui_set(game_grid);
+			//sleep(1);
+			//printf("directionmoved: %d\n",bestmove->direction);
+		}
+	}
 }
 
 void decide_move(char var){
@@ -204,19 +215,19 @@ void decide_move(char var){
 	switch(var){
 
 		case 'w':
-			move_tiles(game_grid, UP);
+			move_tiles(game_grid, UP,1);
 			break;
 
 		case 's':
-			move_tiles(game_grid, DOWN);
+			move_tiles(game_grid, DOWN,1);
 			break;
 
 		case 'a':
-			move_tiles(game_grid, LEFT);
+			move_tiles(game_grid, LEFT,1);
 			break;
 
 		case 'd':
-			move_tiles(game_grid, RIGHT);
+			move_tiles(game_grid, RIGHT,1);
 			break;
 
 	}	
@@ -226,6 +237,8 @@ gboolean onkeypress(GtkWidget *widget, GdkEventKey *event, gpointer data){
 	decide_move(event->keyval);
 	printf("%c\n",event->keyval);
 	grid_print(game_grid);
+	printf("Score: %d\n",game_grid->score);
+	printf("Heuristic Score: %d\n",game_grid->heuristicscore);
 	grid_gui_set(game_grid);
 	return TRUE;
 }

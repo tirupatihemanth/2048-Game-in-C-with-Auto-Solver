@@ -1,4 +1,3 @@
-
 #ifndef BACKEND_H
 #define BACKEND_H
 
@@ -7,13 +6,12 @@
 #define LEFT 3
 #define RIGHT 4
 
-
-
 typedef struct Grid_{
 
 	int rows,cols;
 	int **array;
-
+	int score;
+	int heuristicscore;
 } Grid;
 
 //Definition of grid_print function
@@ -24,6 +22,10 @@ void grid_print(Grid *);
 
 Grid* grid_initialise(int, int);
 
+//Definiton for duplicationg a grid
+
+Grid * grid_duplicate(Grid *);
+
 //Definition for resetting a grid
 
 void grid_reset( Grid *);
@@ -31,12 +33,12 @@ void grid_reset( Grid *);
 // Definition to merge an array given 
 
 
-int * merge(int *, int);
+int merge(int *, int);
 
 // Helper function for merge function
 
 
-int * merger(int *, int);
+int merger(int *, int);
 
 // Helper function for merge function
 
@@ -45,7 +47,7 @@ int * sorter(int *, int);
 
 //Definiton to move the grid when a particular arrow is pressed
 
-void move_tiles(Grid *, int);
+int move_tiles(Grid *, int, int);
 
 // Definiton to get the no. of rows in the grid useful for gui
 

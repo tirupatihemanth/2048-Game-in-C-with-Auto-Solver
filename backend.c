@@ -1,3 +1,10 @@
+/*
+gcc `pkg-config gtk+-2.0 --cflags` -g frontend_2048.c backend.c `pkg-config gtk+-2.0 --libs`
+
+This is the command one must type on linux terminal with gtk library already installed in it
+
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "backend.h"
@@ -58,9 +65,36 @@ Grid* grid_initialise(int rows, int cols){
 			grid->array[i][j] = 0;
 		}
 	}
+	grid->score = 0;
+	grid->heuristicscore = 0;
 	new_tile(grid);
 	new_tile(grid);
 	return grid;
+}
+
+//Implementation of a function to duplicate a grid given
+
+Grid *grid_duplicate(Grid *grid){
+
+	int i,j;
+	Grid *duplicate_grid;
+	duplicate_grid = (Grid *) malloc(sizeof(Grid));
+	duplicate_grid->rows = grid->rows;
+	duplicate_grid->cols = grid->cols;
+	
+	duplicate_grid->array = (int **) malloc(sizeof(int *)*grid->rows);
+
+	for(i=0;i<grid->rows;i++)
+		duplicate_grid->array[i] = (int *) malloc(sizeof(int)*grid->cols);
+
+	for(i=0;i<grid->rows;i++){
+		for(j=0;j<grid->cols;j++){
+			duplicate_grid->array[i][j] = grid->array[i][j];
+		}
+	}
+	duplicate_grid->score = grid->score;
+	duplicate_grid->heuristicscore = grid->heuristicscore;
+
 }
 
 //Implementation to reset a grid i.e sets all elements of a grid to 0
@@ -73,16 +107,18 @@ void grid_reset(Grid *grid){
 			grid->array[i][j] = 0;
 		}
 	}
+	grid->score = 0;
 	new_tile(grid);
 	new_tile(grid);
 }
 
 //Implementation to merge an array of given size
 
-int * merge(int *temp, int length){
+int merge(int *temp, int length){
+	int score;
 	sorter(temp, length);
-	merger(temp, length);
-	return temp;
+	score = merger(temp, length);
+	return score;
 }
 
 // Implementation of a function to seperate all non zero tiles from zero tiles
@@ -102,24 +138,25 @@ int * sorter(int *temp, int length){
 	return temp;
 }
 
-int * merger(int *temp, int length){
+int merger(int *temp, int length){
 
-	int i;
+	int i,score = 0;
 	for(i=0;i<length-1;i++){
 		if(temp[i] == temp[i+1]){
+			score+=2*temp[i];
 			temp[i]+=temp[i+1];
 			temp[i+1]=0;
 		}
 	}
 	temp = sorter(temp,length);
-	return temp;
+	return score;
 }
 
 //Implementation to move rows in a particular direction
 
-void move_tiles(Grid *grid, int direction){
+int move_tiles(Grid *grid, int direction, int addtile){
 
-	int duplicate_array[grid->rows][grid->cols], i, idx, status = 0, *temp;
+	int duplicate_array[grid->rows][grid->cols], i, idx, status = 0, *temp,tileadded = 0;
 
 	for(i = 0;i<grid->rows;i++){
 		for(idx = 0;idx<grid->cols;idx++){
@@ -135,7 +172,8 @@ void move_tiles(Grid *grid, int direction){
 				temp[i] = grid->array[i][idx];
 			}
 
-			merge(temp, grid->rows);
+			grid->score+=merge(temp, grid->rows);
+			//printf("grid->score: %d\n",grid->score);
 			for(i=0;i<grid->rows;i++){
 				grid->array[i][idx] = temp[i];
 
@@ -155,7 +193,7 @@ void move_tiles(Grid *grid, int direction){
 			}
 
 			reverse_array(temp, grid->rows);
-			merge(temp, grid->rows);
+			grid->score+=merge(temp, grid->rows);
 			reverse_array(temp, grid->rows);
 			for(i=0;i<grid->rows;i++){
 				grid->array[i][idx] = temp[i];
@@ -171,7 +209,7 @@ void move_tiles(Grid *grid, int direction){
 			for(i=0;i<grid->cols;i++){
 				temp[i] = grid->array[idx][i];
 			}
-			merge(temp, grid->cols);
+			grid->score+=merge(temp, grid->cols);
 			for(i=0;i<grid->cols;i++){
 				grid->array[idx][i] = temp[i];
 			}
@@ -186,7 +224,7 @@ void move_tiles(Grid *grid, int direction){
 				temp[i] = grid->array[idx][i];
 			}
 			reverse_array(temp, grid->cols);
-			merge(temp, grid->cols);
+			grid->score+=merge(temp, grid->cols);
 			reverse_array(temp, grid->cols);
 			for(i=0;i<grid->cols;i++){
 				grid->array[idx][i] = temp[i];
@@ -195,21 +233,71 @@ void move_tiles(Grid *grid, int direction){
 		free(temp);
 	}
 
-	for(i = 0;i<grid->rows;i++){
-		for(idx = 0;idx<grid->cols;idx++){
-			if(duplicate_array[i][idx] != grid->array[i][idx]){
-				status = 1;
-				new_tile(grid);
-				break;
+	if(addtile){
+		for(i = 0;i<grid->rows;i++){
+			for(idx = 0;idx<grid->cols;idx++){
+				if(duplicate_array[i][idx] != grid->array[i][idx]){
+					status = 1;
+					tileadded = 1;
+					new_tile(grid);
+					break;
+				}
 			}
-		}
 
-		if(status == 1)
-			break;
+			if(status == 1)
+				break;
+		}
 	}
 
+	grid->heuristicscore = getHeuristicScore(grid);
+	//printf("heuristicscorebackend: %d\n",grid->heuristicscore);
+	return tileadded;
 }
 
+//returns 1 if the 2048 tile is obtained
+
+int is_win(Grid *grid){
+
+	int i,j;
+	for(i=0;i<grid->rows;i++){
+		for(j=0;j<grid->cols;j++){
+			if(grid->array[i][j]>=2048)
+				return 1;
+		}
+	}
+	return 0;
+}
+
+//returns 1 if the two grids are identical else zero
+
+int is_identical(Grid *grid1, Grid *grid2){
+
+	int i,j;
+	for(i=0;i<grid1->rows;i++){
+		for(j=0;j<grid1->cols;j++){
+			if(grid1->array[i][j] != grid2->array[i][j])
+				return 0;
+		}
+	}
+	return 1;
+}
+
+//returns 1 if the user cannot make any moves else returns 0
+int is_terminated(Grid *grid){
+
+	int i;
+	Grid *grid_copy = grid_duplicate(grid);
+
+	for(i=1;i<=4;i++){
+		move_tiles(grid_copy, i, 1);
+		if(!is_identical(grid_copy,grid)){
+			grid_delete(grid_copy);
+			return 0;
+		}
+	}
+	grid_delete(grid_copy);
+	return 1;
+}
 //Get No. of rows in the grid
 
 int get_grid_rows(Grid *grid){

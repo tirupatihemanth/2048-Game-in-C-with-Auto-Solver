@@ -25,7 +25,9 @@ typedef struct GTree_{
 	Node *root;
 } GTree;*/
 Bestmove* bestmove_initialise();
-Bestmove* best_move(Grid *, int , int , int , int);
+Bestmove* best_move(Grid *, int, int, int, int);
+//Bestmove* best_move(Grid *, int);
+//Bestmove* computer_move(Grid *, int);
 float getClusterScore(Grid *);
 int getHeuristicScore(Grid *);
 

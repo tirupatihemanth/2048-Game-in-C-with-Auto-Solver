@@ -1,5 +1,5 @@
 /*
-gcc `pkg-config gtk+-2.0 --cflags` -g frontend_2048.c backend.c `pkg-config gtk+-2.0 --libs`
+gcc `pkg-config gtk+-2.0 --cflags` -g frontend_2048.c 2048_AI.c backend.c `pkg-config gtk+-2.0 --libs`
 
 This is the command one must type on linux terminal with gtk library already installed in it
 
@@ -22,6 +22,8 @@ void grid_print(Grid *grid){
 		printf("\n");
 	}
 	printf("\n");
+	printf("heuristicscore: %d\n",grid->heuristicscore);
+	printf("score: %d\n",grid->score);
 }
 
 //Implementation to delete the grid
@@ -74,7 +76,7 @@ Grid* grid_initialise(int rows, int cols){
 
 //Implementation of a function to duplicate a grid given
 
-Grid *grid_duplicate(Grid *grid){
+Grid * grid_duplicate(Grid *grid){
 
 	int i,j;
 	Grid *duplicate_grid;
@@ -94,7 +96,7 @@ Grid *grid_duplicate(Grid *grid){
 	}
 	duplicate_grid->score = grid->score;
 	duplicate_grid->heuristicscore = grid->heuristicscore;
-
+	return duplicate_grid;
 }
 
 //Implementation to reset a grid i.e sets all elements of a grid to 0
@@ -108,6 +110,7 @@ void grid_reset(Grid *grid){
 		}
 	}
 	grid->score = 0;
+	grid->heuristicscore = 0;
 	new_tile(grid);
 	new_tile(grid);
 }
@@ -154,13 +157,18 @@ int merger(int *temp, int length){
 
 //Implementation to move rows in a particular direction
 
-int move_tiles(Grid *grid, int direction, int addtile){
+void move_tiles(Grid *grid, int direction, int addtile){
 
-	int duplicate_array[grid->rows][grid->cols], i, idx, status = 0, *temp,tileadded = 0;
+	int  i, idx, status = 0, *temp;
+	int **duplicate;
+	duplicate = (int **) malloc(sizeof(int *)*grid->rows);
+
+	for(i=0;i<grid->rows;i++)
+		duplicate[i] = (int *) malloc(sizeof(int)*grid->cols);
 
 	for(i = 0;i<grid->rows;i++){
 		for(idx = 0;idx<grid->cols;idx++){
-			duplicate_array[i][idx] = grid->array[i][idx];
+			duplicate[i][idx] = grid->array[i][idx];
 		}
 	}
 
@@ -236,9 +244,8 @@ int move_tiles(Grid *grid, int direction, int addtile){
 	if(addtile){
 		for(i = 0;i<grid->rows;i++){
 			for(idx = 0;idx<grid->cols;idx++){
-				if(duplicate_array[i][idx] != grid->array[i][idx]){
+				if(duplicate[i][idx] != grid->array[i][idx]){
 					status = 1;
-					tileadded = 1;
 					new_tile(grid);
 					break;
 				}
@@ -249,9 +256,12 @@ int move_tiles(Grid *grid, int direction, int addtile){
 		}
 	}
 
+	for(i=0;i<grid->rows;i++)
+		free(duplicate[i]);
+	free(duplicate);
 	grid->heuristicscore = getHeuristicScore(grid);
 	//printf("heuristicscorebackend: %d\n",grid->heuristicscore);
-	return tileadded;
+/*	return tileadded;*/
 }
 
 //returns 1 if the 2048 tile is obtained
@@ -289,7 +299,7 @@ int is_terminated(Grid *grid){
 	Grid *grid_copy = grid_duplicate(grid);
 
 	for(i=1;i<=4;i++){
-		move_tiles(grid_copy, i, 1);
+		move_tiles(grid_copy, i,1);
 		if(!is_identical(grid_copy,grid)){
 			grid_delete(grid_copy);
 			return 0;
@@ -316,7 +326,7 @@ int get_grid_cols(Grid *grid){
 
 //creating a new tile in the empty space in the grid with 90% probablility of getting 2 and 10% probability of getting four
 
-void new_tile(Grid *grid){
+int new_tile(Grid *grid){
 
 	int row,col,list[] = {2,2,2,2,2,2,2,2,2,4};
 
@@ -325,7 +335,8 @@ void new_tile(Grid *grid){
 		col = rand()%(grid->cols);
 		if(grid->array[row][col]==0){
 			grid->array[row][col] = list[rand()%10];
-			break;
+			return grid->array[row][col];
+			//break;
 		}
 	}
 

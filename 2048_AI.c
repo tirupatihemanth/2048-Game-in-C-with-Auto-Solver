@@ -53,7 +53,7 @@ float getClusterScore(Grid *grid){
 
 //Implementation of a function to return heuristic score which is a measure to decide how best a given state of the grid is larger the heuristic score then the system try to achieve this state
 
-int getHeuristicScore(Grid *grid){
+/*int getHeuristicScore(Grid *grid){
 	if(grid->score == 0)
 		return 0;
 	int emptycells = 0, i, j;
@@ -64,51 +64,87 @@ int getHeuristicScore(Grid *grid){
 				emptycells++;
 		}
 	}
-	//printf("clusterscore: %f\n",getClusterScore(grid));
-	//printf("emptycells: %d\n",emptycells);
-	//printf("score: %d\n",grid->score);
-	heuristicScore = (grid->score) + (log(grid->score)*emptycells) - getClusterScore(grid);
-	//printf("heuristicscore: %d\n",heuristicScore);
-	if(heuristicScore<0){
-		return 0;
-	}
-	else{
+
+	heuristicScore = grid->score + (log(grid->score)*emptycells)-1.5*getClusterScore(grid);	//printf("heuristicscore: %d\n",heuristicScore);
 		return heuristicScore;
+
+}*/
+
+int getHeuristicScore(Grid *grid){
+	int stat1[4][4] = {{3,2,1,0},{2,1,0,-1},{1,0,-1,-2},{0,-1,-2,-3}};
+	int stat2[4][4] = {{0,1,2,3},{-1,0,1,2},{-2,-1,0,1},{-3,-2,-1,0}};
+	int stat3[4][4] = {{0,-1,-2,-3},{1,0,-1,-2},{2,1,0,-1},{3,2,1,0}};
+	int stat4[4][4] = {{-3,-2,-1,0},{-2,-1,0,1},{-1,0,1,2},{0,1,2,3}};
+	int finalcount = 0,i,j,emptycells=0;
+	int count =0;
+	for(i=0;i<grid->rows;i++){
+		for(j=0;j<grid->cols;j++){
+			if(grid->array[i][j] == 0)
+				emptycells++;
+			count+=grid->array[i][j]*stat1[i][j];
+		}
 	}
+	count = abs(count);
+	finalcount = count>finalcount?count:finalcount;
+	count =0;
+	
+	for(i=0;i<grid->rows;i++){
+		for(j=0;j<grid->cols;j++){
+			count+=grid->array[i][j]*stat2[i][j];
+		}
+	}
+	count = abs(count);
+	finalcount = count>finalcount?count:finalcount;
+	count =0;
+	
+	for(i=0;i<grid->rows;i++){
+		for(j=0;j<grid->cols;j++){
+			count+=grid->array[i][j]*stat3[i][j];
+		}
+	}
+	count = abs(count);
+	finalcount = count>finalcount?count:finalcount;
+	count =0;
+	
+	for(i=0;i<grid->rows;i++){
+		for(j=0;j<grid->cols;j++){
+			count+=grid->array[i][j]*stat4[i][j];
+		}
+	}
+	count = abs(count);
+	finalcount = count>finalcount?count:finalcount;
+	//return finalcount;
+	//return finalcount-getClusterScore(grid);
+	return grid->score+finalcount + log(grid->score)*emptycells - getClusterScore(grid);
 
 }
-
-
 
 //Solution for finding the next best move given the grid at any point of time
 //depth is how deeper AI is allowed to go
 //alpha is maximum value of heuristic score found so far and beta is the minmum value of the heuristic score found so far
 
+
  Bestmove* best_move(Grid *grid, int depth, int alpha, int beta, int player){
 
- 	//grid_print(grid);
+
  	Bestmove *bestmove = bestmove_initialise();
-	int direction = 0,i,j,stat,bestscore;
-	//printf("depth: %d \n",depth);
-	//grid_print(grid);
+	int direction = 0,bestscore;
+
 	if(is_terminated(grid)){
 		printf("blahterm\n");
-		bestscore = grid->heuristicscore;
-		//direction = 0;
+		bestscore = 0;
 	}
 	else if(depth == 0){
-		//printf("blahdepth\n");
 		bestscore = grid->heuristicscore;
-		//direction = 0;
+
 	}
 	else{
-
+		int i;
 		if(player == USER){
 			for(i=1;i<=4;i++){
 				Grid *grid_copy = grid_duplicate(grid);
-				move_tiles(grid_copy,i,0); 
-				if(is_identical(grid_copy,grid) && grid_copy->score == grid->score){
-					//printf("identical\n");
+				move_tiles(grid_copy,i,0);
+				if(is_identical(grid_copy,grid)){
 					grid_delete(grid_copy);
 					continue;
 				}
@@ -118,13 +154,14 @@ int getHeuristicScore(Grid *grid){
 					direction = i;
 				}
 				grid_delete(grid_copy);
+				free(temp);
 				if(beta<=alpha)
 					break;
 			}
 			bestscore = alpha;
 		}
 		else{
-			int randval;
+			int randval,j,i,stat,total_score = 0, total_weight = 0;
 			stat = 0;
 			for(i=0;i< grid->rows;i++){
 				for(j=0;j<grid->cols;j++){
@@ -137,6 +174,7 @@ int getHeuristicScore(Grid *grid){
 								beta = temp->heuristicscore;
 							}
 							grid_delete(grid_copy);
+							free(temp);
 							if(beta<=alpha){
 								stat = 1;
 								break;
@@ -158,84 +196,61 @@ int getHeuristicScore(Grid *grid){
 	return bestmove;
 }
 
+/*Bestmove* best_move(Grid *grid, int depth){
 
-
-
-
-
-
-
-
-/*Node *node_new(float data, Node *up, Node *down, Node *left, Node *right){
-	Node *node = (Node *) malloc(sizeof(Node));
-	node->data = data;
-	node->up = up;
-	node->down = down;
-	node->left = left;
-	node->right = right;
-}
-
-GTree *gtree_new(){
-	GTree *gtree = (GTree *) malloc(sizeof(GTree));
-	gtree->root = NULL;
-}
-
-GTree *gtree_add(GTree *gtree, float data){
-	NOde *node = node_new(data, NULL, NULL, NULL);
-
-	if(gtree->root == NULL){
-		gtree->root = node;
-		return(gtree);
+	Bestmove *bestmove = bestmove_initialise();
+	int bestscore = 0, direction = 0, i,j;
+	if(is_terminated(grid))
+		bestscore = 0;
+	else if(depth <= 0){
+		bestscore = grid->heuristicscore;
 	}
-	Node *iterator = gtree->root;
+	else{
+		for(i=1;i<=4;i++){
 
-	while(1){
-		if(iterator->up == NULL){
-			iterator->up = node;
-			return gtree;
+			Grid *grid_copy = grid_duplicate(grid);
+			move_tiles(grid_copy,i,0); 
+			if(is_identical(grid_copy,grid)){
+				grid_delete(grid_copy);
+				continue;
+			}
+
+			Bestmove *temp = computer_move(grid_copy, depth-1);
+			grid_delete(grid_copy);
+			if(temp->heuristicscore>=bestscore){
+				bestscore = temp->heuristicscore;
+				direction = i;
+			}
+			free(temp);
 		}
-		else if(iterator->down == NULL){
-			iterator->down = node;
-			return gtree;
-		}
-		else if(iterator->left == NULL){
-			iterator->left = node;
-			return gtree;
-		}
-		else if(iterator->right == NULL){
-			iterator->right = node;
-			return gtree;
-		}
-		else{
-			int k = rand()%4;
-			switch(k){
-				case 0:
-					iterator = iterator->up;
-					break;
-				case 1:
-					iterator = iterator->down;
-					break;
-				case 2:
-					iterator = iterator->left;
-					break;
-				case 3:
-					iterator = iterator->right;
-					break;
-				default:
-					printf("An internal error has occured");
-					exit(1);
+	}
+	bestmove->heuristicscore = bestscore;
+	bestmove->direction = direction;
+	return bestmove;
+}
+
+Bestmove* computer_move(Grid *grid, int depth){
+
+	Bestmove *bestmove = bestmove_initialise();
+	int i,j,randval;
+	float score,weight,probability;
+	for(i=0;i<grid->rows;i++){
+		for(j=0;j<grid->cols;j++){
+			if(grid->array[i][j] == 0){
+				for(randval = 2;randval<=4;randval+=2){
+
+					Grid *grid_copy = grid_duplicate(grid);
+					grid_copy->array[i][j] = randval;
+					Bestmove *temp = best_move(grid_copy,depth-1);
+					grid_delete(grid_copy);
+					probability = (randval==2)? 0.9 : 0.1;
+					score+=temp->heuristicscore*probability;
+					weight+=probability;
+					free(temp);
+				}
 			}
 		}
-		continue;
-
 	}
-}
-
-GTree * make_postree(GTree *gtree, Grid *grid, int depth){
-	//gtree_add(grid->heuristicscore);
-	Grid *grid_new = grid_duplicate(grid);
-	move_tiles(grid_new,UP);
-	
-}
-
-*/
+	bestmove->heuristicscore = score/weight;
+	return bestmove;
+}*/

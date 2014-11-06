@@ -47,7 +47,7 @@ int * sorter(int *, int);
 
 //Definiton to move the grid when a particular arrow is pressed
 
-int move_tiles(Grid *, int, int);
+void move_tiles(Grid *, int, int);
 
 // Definiton to get the no. of rows in the grid useful for gui
 
@@ -59,7 +59,7 @@ int get_grid_cols(Grid *);
 
 //Definiton to create a new tile with 90% probability of getting a 2 and 10% probability of getting a 4
 
-void new_tile(Grid *);
+int new_tile(Grid *);
 
 // Sets a given tile with a particular value
 

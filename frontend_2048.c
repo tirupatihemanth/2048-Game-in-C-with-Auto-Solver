@@ -196,23 +196,36 @@ void grid_gui_set(Grid *game_grid){
 
 
 void autoplay_clicked(GtkWidget *autoplaybutton, gpointer data){
-	int i,j;
+	int i,j,k=30,max=2;
 	Bestmove *bestmove;
-	while(1){
-		bestmove = best_move(game_grid, 5, INT_MIN, INT_MAX, USER);
-		//bestmove = best_move(game_grid,5);
-		//printf("direction: %d\n",bestmove->direction);
-		if(bestmove->direction){
-			move_tiles(game_grid, bestmove->direction,1);
-			grid_print(game_grid);
-			grid_gui_set(game_grid);
+	while(k){
+		while(1){
+			bestmove = best_move(game_grid, 5, INT_MIN, INT_MAX, USER);
+			//bestmove = best_move(game_grid,3);
+			//printf("direction: %d\n",bestmove->direction);
+			if(bestmove->direction){
+				move_tiles(game_grid, bestmove->direction,1);
+				//grid_print(game_grid);
+				grid_gui_set(game_grid);
 
-			while (gtk_events_pending()){
-				gtk_main_iteration();
+				while (gtk_events_pending()){
+					gtk_main_iteration();
+				}
+			}
+			else{
+				max = 2;
+				for(i=0;i<4;i++){
+					for(j=0;j<4;j++){
+						if(game_grid->array[i][j]>max)
+							max = game_grid->array[i][j];
+					}
+				}
+				printf("maxvalue: %d\n",max);
+				grid_reset(game_grid);
+				k--;
+				break;
 			}
 		}
-		else
-			break;
 	}
 }
 
@@ -220,18 +233,22 @@ void decide_move(char var){
 
 	switch(var){
 
+		case 'R':
 		case 'w':
 			move_tiles(game_grid, UP,1);
 			break;
 
+		case 'T':
 		case 's':
 			move_tiles(game_grid, DOWN,1);
 			break;
 
+		case 'Q':
 		case 'a':
 			move_tiles(game_grid, LEFT,1);
 			break;
 
+		case 'S':
 		case 'd':
 			move_tiles(game_grid, RIGHT,1);
 			break;
@@ -245,6 +262,7 @@ gboolean onkeypress(GtkWidget *widget, GdkEventKey *event, gpointer data){
 		return TRUE;
 	}
 	decide_move(event->keyval);
+	//printf("%d\n",event->keyval);
 	printf("%c\n",event->keyval);
 	grid_print(game_grid);
 	printf("Score: %d\n",game_grid->score);

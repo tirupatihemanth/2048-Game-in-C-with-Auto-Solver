@@ -40,11 +40,13 @@ float getavgscore(Grid *grid, int i, int j){
 float getClusterScore(Grid *grid){
 
 	int i,j;
-	float clusterscore = 0;
+	float clusterscore = 0,sum = 0;
 	for(i=0;i<grid->rows;i++){
 		for(j=0;j<grid->cols;j++){
-			if(grid->array[i][j] != 0)
-			clusterscore+=getavgscore(grid, i, j);
+			if(grid->array[i][j] != 0){
+				clusterscore+=getavgscore(grid, i, j);
+				sum+=grid->array[i][j];
+			}
 		}
 	}
 	return clusterscore;
@@ -71,10 +73,10 @@ float getClusterScore(Grid *grid){
 }*/
 
 int getHeuristicScore(Grid *grid){
-	int stat1[4][4] = {{3,2,1,0},{2,1,0,-1},{1,0,-1,-2},{0,-1,-2,-3}};
-	int stat2[4][4] = {{0,1,2,3},{-1,0,1,2},{-2,-1,0,1},{-3,-2,-1,0}};
-	int stat3[4][4] = {{0,-1,-2,-3},{1,0,-1,-2},{2,1,0,-1},{3,2,1,0}};
-	int stat4[4][4] = {{-3,-2,-1,0},{-2,-1,0,1},{-1,0,1,2},{0,1,2,3}};
+	int stat1[4][4] = {{4,3,2,1},{3,2,1,0},{2,1,0,-1},{1,0,-1,-2}};
+	int stat2[4][4] = {{1,2,3,4},{0,1,2,3},{-1,0,1,2},{-2,-1,0,1}};
+	//int stat1[4][4] = {{0,-1,-2,-3},{1,0,-1,-2},{2,1,0,-1},{3,2,1,0}};
+	//int stat2[4][4] = {{-3,-2,-1,0},{-2,-1,0,1},{-1,0,1,2},{0,1,2,3}};
 	int finalcount = 0,i,j,emptycells=0;
 	int count =0;
 	for(i=0;i<grid->rows;i++){
@@ -84,8 +86,10 @@ int getHeuristicScore(Grid *grid){
 			count+=grid->array[i][j]*stat1[i][j];
 		}
 	}
+
 	count = abs(count);
-	finalcount = count>finalcount?count:finalcount;
+	finalcount = count;
+	//printf("count1: %d\n",count);
 	count =0;
 	
 	for(i=0;i<grid->rows;i++){
@@ -95,28 +99,15 @@ int getHeuristicScore(Grid *grid){
 	}
 	count = abs(count);
 	finalcount = count>finalcount?count:finalcount;
-	count =0;
-	
-	for(i=0;i<grid->rows;i++){
-		for(j=0;j<grid->cols;j++){
-			count+=grid->array[i][j]*stat3[i][j];
-		}
-	}
-	count = abs(count);
-	finalcount = count>finalcount?count:finalcount;
-	count =0;
-	
-	for(i=0;i<grid->rows;i++){
-		for(j=0;j<grid->cols;j++){
-			count+=grid->array[i][j]*stat4[i][j];
-		}
-	}
-	count = abs(count);
-	finalcount = count>finalcount?count:finalcount;
 	//return finalcount;
 	//return finalcount-getClusterScore(grid);
-	return grid->score+finalcount + log(grid->score)*emptycells - getClusterScore(grid);
-
+	return grid->score+25*finalcount+log(grid->score)*emptycells - 12.75*getClusterScore(grid);
+	//15 10 -25000 200000
+	//15 7 25000 200000
+	//25 10 200000
+	// 25 12
+	// 25 12.75
+	//25 13
 }
 
 //Solution for finding the next best move given the grid at any point of time
@@ -131,8 +122,9 @@ int getHeuristicScore(Grid *grid){
 	int direction = 0,bestscore;
 
 	if(is_terminated(grid)){
-		printf("blahterm\n");
-		bestscore = 0;
+		//printf("blahterm\n");
+		bestscore = -200000;
+		//printf("%d bestscore",bestscore);
 	}
 	else if(depth == 0){
 		bestscore = grid->heuristicscore;
@@ -161,7 +153,7 @@ int getHeuristicScore(Grid *grid){
 			bestscore = alpha;
 		}
 		else{
-			int randval,j,i,stat,total_score = 0, total_weight = 0;
+			int randval,j,i,stat;
 			stat = 0;
 			for(i=0;i< grid->rows;i++){
 				for(j=0;j<grid->cols;j++){
@@ -233,7 +225,7 @@ Bestmove* computer_move(Grid *grid, int depth){
 
 	Bestmove *bestmove = bestmove_initialise();
 	int i,j,randval;
-	float score,weight,probability;
+	float score =0,weight=0,probability;
 	for(i=0;i<grid->rows;i++){
 		for(j=0;j<grid->cols;j++){
 			if(grid->array[i][j] == 0){
@@ -251,6 +243,6 @@ Bestmove* computer_move(Grid *grid, int depth){
 			}
 		}
 	}
-	bestmove->heuristicscore = score/weight;
+	bestmove->heuristicscore = score*1.0/weight;
 	return bestmove;
 }*/

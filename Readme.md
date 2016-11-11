@@ -2,4 +2,4 @@ This repository is about the game 2048 game completely written in c with auto so
 Once you have gtk graphics library and gcc installed on your system run the following command in the terminal
 
 make all
-./2048_game
+``./2048_game``	
